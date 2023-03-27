@@ -1,0 +1,167 @@
+Attribute VB_Name = "Module1"
+Sub StockDataAnalysis()
+
+'-----------------
+'Variables
+'-----------------
+'Declaring variables
+Dim A As Worksheet
+Dim TickerSymbol As String
+Dim OpenPrice As Double
+Dim ClosePrice As Double
+Dim VolumeOfStock As LongLong
+
+Dim NT_Ticker As String
+Dim NT_VolumeOfStock As LongLong
+
+Dim i As Long
+Dim j As Long
+
+Dim YearlyChange As Double
+Dim PercentChange As Variant
+PercentChange = CDec(PercentChange)
+Dim TotalStockVolume As LongLong
+
+Dim LastRowC1 As Long
+Dim LastRowC9 As Long
+Dim Max As Long
+Dim Min As Long
+Dim Dt As Long
+
+Dim FormatSheets As Range
+
+Dim GreatestPIncrease As Variant
+GreatestPIncrease = CDec(GreatestPIncrease)
+Dim GreatestPDecrease As Variant
+GreatestPDecrease = CDec(GreatestPDecrease)
+Dim GreatestTotalVolume As LongLong
+
+Dim GreatestPIncrease_Ticker As String
+Dim GreatestPDecrease_Ticker As String
+Dim GreatestTotalVolume_Ticker As String
+
+Dim p As Long
+Dim q As Long
+Dim r As Long
+
+'---------------
+'Loop1 through all worksheets in a workbook
+'---------------
+For Each A In Worksheets
+
+    'creating headers/coulumns
+    A.Cells(1, 9).Value = "Ticker"
+    A.Cells(1, 10).Value = "Yearly Change"
+    A.Cells(1, 11).Value = "Percent Change"
+    A.Cells(1, 12).Value = "Total Stock Volume"
+    A.Cells(1, 16).Value = "Tiker"
+    A.Cells(1, 17).Value = "Value"
+    A.Cells(2, 15).Value = "Greatest % Increase"
+    A.Cells(3, 15).Value = "Greatest % Decrease"
+    A.Cells(4, 15).Value = "Greatest Total Volume"
+    
+    'Find blank rows in the 1st and the 9th Column
+    LastRowC1 = A.Cells(Rows.Count, 1).End(xlUp).Row
+    LastRowC9 = A.Cells(Rows.Count, 9).End(xlUp).Row
+    LastRowC9 = LastRowC9 + 1
+    
+    '--------------------------
+    'Loop2 through each ticker/reset ticker
+    '--------------------------
+    For j = 2 To LastRowC1
+    
+        'assign initial values to variaables
+        TickerSymbol = A.Cells(j, 1).Value
+        OpenPrice = A.Cells(j, 3).Value
+        VolumeOfStock = A.Cells(j, 7).Value
+        TotalStockVolume = A.Cells(j, 7).Value
+        Max = A.Cells(j, 2).Value
+        Min = A.Cells(j, 2).Value
+
+    'Find blank row in 9th column to print results
+    If Application.WorksheetFunction.CountIf(A.Range("$I:$I"), TickerSymbol) = 0 Then
+        
+        '-----------------------
+        'Loop3 Capture data for a specific ticker
+        '-----------------------
+        For i = 3 To LastRowC1
+            NT_Ticker = A.Cells(i, 1).Value
+            If TickerSymbol = NT_Ticker Then
+            NT_VolumeOfStock = A.Cells(i, 7).Value
+            TotalStockVolume = TotalStockVolume + NT_VolumeOfStock
+            Dt = A.Cells(i, 2).Value
+                'Case Dt > Min 'open price
+                If Dt < Min Then
+                Min = Dt
+                OpenPrice = A.Cells(i, 3).Value
+                'Case Dt > Max 'close price
+                ElseIf Dt > Max Then
+                Max = Dt
+                ClosePrice = A.Cells(i, 6).Value
+                End If
+            End If
+        Next i
+        '---------------------
+        'End of Loop3
+        '---------------------
+        
+        'Print results for a specific ticker
+        YearlyChange = ClosePrice - OpenPrice
+        PercentChange = (YearlyChange / OpenPrice) * 100
+        A.Cells(LastRowC9, 9).Value = TickerSymbol
+        A.Cells(LastRowC9, 10).Value = YearlyChange
+        A.Cells(LastRowC9, 12).Value = Str(TotalStockVolume)
+        A.Cells(LastRowC9, 11).Value = Str(PercentChange) + "%"
+        
+        'Formatting Yearly Change and Percentage Change
+        If A.Cells(LastRowC9, 10).Value < 0 Then
+        A.Cells(LastRowC9, 10).Interior.ColorIndex = 3
+        A.Cells(LastRowC9, 11).Interior.ColorIndex = 3
+        Else
+        A.Cells(LastRowC9, 10).Interior.ColorIndex = 4
+        A.Cells(LastRowC9, 11).Interior.ColorIndex = 4
+        End If
+        LastRowC9 = LastRowC9 + 1
+        End If
+
+    Next j
+    
+    '-----------------
+    'End of Loop2
+    '-----------------
+    
+    'Print Greatest %increase, Greatest %decrease and Greatest Total Volume
+    GreatestPIncrease = Application.WorksheetFunction.Max(A.Range("$K:$K"))
+    GreatestPDecrease = Application.WorksheetFunction.Min(A.Range("$K:$K"))
+    GreatestTotalVolume = Application.WorksheetFunction.Max(A.Range("$L:$L"))
+    A.Cells(2, 17).Value = Str(GreatestPIncrease * 100) + "%"
+    A.Cells(3, 17).Value = Str(GreatestPDecrease * 100) + "%"
+    A.Cells(4, 17).Value = Str(GreatestTotalVolume)
+    p = Application.WorksheetFunction.Match(A.Cells(2, 17).Value, A.Range("$K:$K"), 0)
+    q = Application.WorksheetFunction.Match(A.Cells(3, 17).Value, A.Range("$K:$K"), 0)
+    r = Application.WorksheetFunction.Match(A.Cells(4, 17).Value, A.Range("$L:$L"), 0)
+    A.Cells(2, 16).Value = A.Cells(p, 9)
+    A.Cells(3, 16).Value = A.Cells(q, 9)
+    A.Cells(4, 16).Value = A.Cells(r, 9)
+    
+    '-----------------
+    'Additional Formatting
+    '-----------------
+  
+    Set FormatSheets = A.Range("$A:$Q")
+        
+    With FormatSheets.Font
+    .Name = "Tahoma"
+    .Size = 10
+    End With
+    
+    A.Columns("A:Q").AutoFit
+    FormatSheets.HorizontalAlignment = xlLeft
+    
+    
+Next A
+'-----------------
+'End of Loop1
+'-----------------
+End Sub
+
